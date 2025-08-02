@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function ResetPassword() {
+function ChangePassword() {
   const [form, setForm] = useState({
     oldPassword: "",
     newPassword: "",
@@ -30,7 +30,7 @@ function ResetPassword() {
 
     // TODO: Connect to backend API for password update here
 
-    setMessage("✅ Password updated successfully!");
+    setMessage("✅ Password changed successfully!");
     // Optionally, navigate back or clear form
   };
 
@@ -93,7 +93,7 @@ function ResetPassword() {
           type="submit"
           style={{ ...buttonStyle, backgroundColor: "#3498db", color: "#fff" }}
         >
-          Update Password
+          Change Password
         </button>
         <button
           type="button"
@@ -108,4 +108,4 @@ function ResetPassword() {
   );
 }
 
-export default ResetPassword;
+export default ChangePassword;

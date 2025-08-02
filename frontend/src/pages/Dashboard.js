@@ -54,7 +54,7 @@ const UserDashboard = () => {
         Welcome 
       </h2>
 
-      {/* Caregiver Cards */}
+      
       <div
         style={{
           display: "flex",
@@ -108,8 +108,7 @@ const UserDashboard = () => {
           </div>
         ))}
       </div>
-
-      {/* Buttons: Logout, Reset Password, then Back */}
+ {/* buttons  */}
       <div style={{ textAlign: "center", marginTop: "40px" }}>
         <button
           onClick={handleLogout}
