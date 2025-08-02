@@ -73,8 +73,10 @@ router.get("/verify/:token", async (req, res) => {
     console.log("✅ Decoded JWT:", decoded);
 
     const existingUser = await User.findOne({ email });
-    if (existingUser)
-      return res.send("⚠️ This email is already verified and registered.");
+    if (existingUser) {
+      // If already registered, redirect to login with query flag
+      return res.redirect(`${process.env.FRONTEND_URL}/login?alreadyVerified=true`);
+    }
 
     const newUser = new User({
       username,
@@ -85,12 +87,14 @@ router.get("/verify/:token", async (req, res) => {
 
     await newUser.save();
 
-    res.send("✅ Email verified and user registered successfully!");
+    // ✅ Redirect to login page with success flag
+    res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
   } catch (err) {
     console.error("Verification Error:", err);
     res.status(400).send("❌ Invalid or expired link");
   }
 });
+
 
 // ========== LOGIN ==========
 router.post('/login', async (req, res) => {
