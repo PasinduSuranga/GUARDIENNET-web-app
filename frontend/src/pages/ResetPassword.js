@@ -1,111 +1,95 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-function ResetPassword() {
-  const [form, setForm] = useState({
-    oldPassword: "",
-    newPassword: "",
-    confirmNewPassword: "",
-  });
-  const [message, setMessage] = useState("");
+function ChangePassword() {
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [message, setMessage] = useState('');
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleUpdate = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic validation
-    if (form.newPassword !== form.confirmNewPassword) {
-      setMessage("❌ New passwords do not match!");
+    // Client-side validations
+    if (!oldPassword || !newPassword || !confirmNewPassword) {
+      alert('All fields are required');
       return;
     }
 
-    if (!form.oldPassword || !form.newPassword) {
-      setMessage("❌ Please fill all required fields.");
+    if (newPassword === oldPassword) {
+      alert('New password must be different from old password');
       return;
     }
 
-    // TODO: Connect to backend API for password update here
+    if (newPassword !== confirmNewPassword) {
+      alert('New passwords do not match');
+      return;
+    }
 
-    setMessage("✅ Password updated successfully!");
-    // Optionally, navigate back or clear form
-  };
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`, // make sure token is stored
+        },
+        body: JSON.stringify({
+          oldPassword,
+          newPassword,
+          confirmNewPassword,
+        }),
+      });
 
-  const handleBack = () => {
-    navigate("/dashboard");
-  };
+      const data = await res.json();
 
-  const inputStyle = {
-    padding: "10px",
-    margin: "10px 0",
-    width: "100%",
-    maxWidth: "300px",
-    borderRadius: "5px",
-    border: "1px solid #ccc",
-    fontSize: "16px",
-  };
+      if (!res.ok) {
+        alert(data.message || 'Something went wrong');
+        return;
+      }
 
-  const buttonStyle = {
-    padding: "12px 24px",
-    margin: "10px 10px 0 0",
-    fontSize: "16px",
-    fontWeight: "600",
-    borderRadius: "8px",
-    border: "none",
-    cursor: "pointer",
+      alert('Password updated successfully!');
+      localStorage.removeItem('token'); // logout
+      navigate('/login'); // redirect to login
+    } catch (error) {
+      console.error('Error:', error);
+      setMessage('Something went wrong');
+    }
   };
 
   return (
-    <div style={{ padding: "40px", maxWidth: "400px", margin: "auto", textAlign: "center" }}>
-      <h2>Reset Password</h2>
-      <form onSubmit={handleUpdate}>
-        <input
-          type="password"
-          name="oldPassword"
-          placeholder="Old Password"
-          value={form.oldPassword}
-          onChange={handleChange}
-          style={inputStyle}
-          required
-        /><br />
-        <input
-          type="password"
-          name="newPassword"
-          placeholder="New Password"
-          value={form.newPassword}
-          onChange={handleChange}
-          style={inputStyle}
-          required
-        /><br />
-        <input
-          type="password"
-          name="confirmNewPassword"
-          placeholder="Confirm New Password"
-          value={form.confirmNewPassword}
-          onChange={handleChange}
-          style={inputStyle}
-          required
-        /><br />
-        <button
-          type="submit"
-          style={{ ...buttonStyle, backgroundColor: "#3498db", color: "#fff" }}
-        >
-          Update Password
-        </button>
-        <button
-          type="button"
-          onClick={handleBack}
-          style={{ ...buttonStyle, backgroundColor: "#777", color: "#fff" }}
-        >
-          Back
-        </button>
+    <div className="change-password-form">
+      <h2>Change Password</h2>
+      {message && <p style={{ color: 'red' }}>{message}</p>}
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Old Password:</label>
+          <input
+            type="password"
+            value={oldPassword}
+            onChange={(e) => setOldPassword(e.target.value)}
+          />
+        </div>
+        <div>
+          <label>New Password:</label>
+          <input
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+        </div>
+        <div>
+          <label>Confirm New Password:</label>
+          <input
+            type="password"
+            value={confirmNewPassword}
+            onChange={(e) => setConfirmNewPassword(e.target.value)}
+          />
+        </div>
+        <button type="submit">Update Password</button>
       </form>
-      {message && <p style={{ marginTop: "15px" }}>{message}</p>}
     </div>
   );
 }
 
-export default ResetPassword;
+export default ChangePassword;

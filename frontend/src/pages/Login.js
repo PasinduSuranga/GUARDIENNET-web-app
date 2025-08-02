@@ -1,4 +1,3 @@
-// src/pages/Login.js
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -8,6 +7,7 @@ function Login() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Show alert if redirected from email verification
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get("verified") === "true") {
@@ -25,13 +25,42 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    alert('Login success!');
-    navigate('/dashboard');
+    setMessage('');
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(user)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage(data.message || "Something went wrong");
+        alert("❌ " + (data.message || "Login failed"));
+        return;
+      }
+
+      // Save the token and optionally the user info
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      alert("✅ " + data.message || "Login successful!");
+      navigate('/dashboard');
+
+    } catch (error) {
+      console.error("Frontend login Error:", error);
+      alert("❌ Network/Server error. Please try again later");
+    }
   };
 
   const handleForgotPassword = () => {
-    alert('Redirecting to password reset page...');
-  };
+  navigate('/forgot-password');
+};
+
 
   return (
     <div>
@@ -62,7 +91,7 @@ function Login() {
           Forgot Password?
         </button>
       </form>
-      {message && <p>{message}</p>}
+      {message && <p style={{ color: 'red' }}>{message}</p>}
     </div>
   );
 }

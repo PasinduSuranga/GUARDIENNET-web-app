@@ -6,8 +6,9 @@ const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const protect = require('../middleware/authMiddleware');
 const User = require('../models/user');
+const TemporaryUser = require('../models/temporaryUser');
 
-// ✅ Setup Nodemailer with Gmail
+// Nodemailer transporter (unchanged)
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -16,26 +17,41 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// ========== SEND VERIFICATION EMAIL (BEFORE REGISTRATION) ==========
+// REGISTER route
 router.post('/register', async (req, res) => {
   const { username, email, password } = req.body;
 
-  console.log("✅ Incoming data:", req.body);
-
-
   try {
+    // Check if user already exists in main user collection
     const existingUser = await User.findOne({ email });
     if (existingUser)
       return res.status(400).json({ message: 'Email already registered' });
 
+    // Also check if email exists in TemporaryUser collection
+    const tempUserExists = await TemporaryUser.findOne({ email });
+    if (tempUserExists) {
+      return res.status(400).json({ message: 'Verification already sent. Please check your email.' });
+    }
+    // Hash password once here
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Save to TemporaryUser collection
+    const tempUser = new TemporaryUser({
+      username,
+      email,
+      password: hashedPassword,
+    });
+
+    await tempUser.save();
+
+    // Create JWT token with only email (or username + email)
     const token = jwt.sign(
-      { username, email, password: hashedPassword },
+      { email, username },
       process.env.JWT_EMAIL_SECRET,
       { expiresIn: '15m' }
     );
 
+    // Verification URL
     const verifyUrl = `${process.env.BACKEND_URL}/api/auth/verify/${token}`;
 
     const html = `
@@ -45,49 +61,53 @@ router.post('/register', async (req, res) => {
       <p>This link expires in 15 minutes.</p>
     `;
 
-    const mailOptions = {
+    await transporter.sendMail({
       from: `"GuardianNet" <${process.env.GMAIL_USER}>`,
       to: email,
       subject: 'Verify your email',
       html,
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log("📧 Verification email sent to:", email);
+    });
 
     res.status(200).json({ message: 'Verification email sent. Please check your inbox.' });
-
   } catch (err) {
     console.error('Register Error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// ========== VERIFY EMAIL & COMPLETE REGISTRATION ==========
-router.get("/verify/:token", async (req, res) => {
+// VERIFY route
+router.get('/verify/:token', async (req, res) => {
   try {
     const { token } = req.params;
     const decoded = jwt.verify(token, process.env.JWT_EMAIL_SECRET);
-    const { username, email, password } = decoded;
+    const { email } = decoded;
 
-    console.log("✅ Decoded JWT:", decoded);
-
+    // Check if user already verified
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      // If already registered, redirect to login with query flag
       return res.redirect(`${process.env.FRONTEND_URL}/login?alreadyVerified=true`);
     }
 
+    // Find TemporaryUser data
+    const tempUser = await TemporaryUser.findOne({ email });
+    if (!tempUser) {
+      return res.status(400).send("Verification link expired or invalid");
+    }
+
+    // Create final user from TemporaryUser data
     const newUser = new User({
-      username,
-      email,
-      password,
+      username: tempUser.username,
+      email: tempUser.email,
+      password: tempUser.password, // hashed password
       isVerified: true,
     });
 
     await newUser.save();
 
-    // ✅ Redirect to login page with success flag
+    // Remove temp user record after successful verification
+    await TemporaryUser.deleteOne({ email });
+
+    // Redirect with success
     res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
   } catch (err) {
     console.error("Verification Error:", err);
@@ -95,17 +115,32 @@ router.get("/verify/:token", async (req, res) => {
   }
 });
 
-
-// ========== LOGIN ==========
+// LOGIN route remains unchanged
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
+  if (!email || !password)
+    return res.status(400).json({ message: 'Email and password are required.' });
+
   try {
-    const user = await User.findOne({ email });
-    if (!user || !(await bcrypt.compare(password, user.password)))
+    const user = await User.findOne({ email }).select('+password');
+    if (!user)
       return res.status(400).json({ message: 'Invalid email or password' });
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+if (!user.isVerified) {
+  return res.status(400).json({ message: 'Please verify your email before logging in.' });
+}
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch)
+      return res.status(400).json({ message: 'Invalid email or password' });
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
 
     res.status(200).json({
       message: 'Login successful',
@@ -118,7 +153,7 @@ router.post('/login', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Login Error:', error);
+    console.error('Login Error:', error.message);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -158,23 +193,80 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
-// ========== RESET PASSWORD ==========
-router.post('/reset-password/:token', async (req, res) => {
-  const { newPassword } = req.body;
-  const resetTokenHash = crypto.createHash('sha256').update(req.params.token).digest('hex');
+// ========== CHANGE PASSWORD ==========
+router.post('/change-password', protect, async (req, res) => {
+  const { oldPassword, newPassword, confirmNewPassword } = req.body;
+
+  // 1. Basic validations
+  if (!oldPassword || !newPassword || !confirmNewPassword) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  if (newPassword !== confirmNewPassword) {
+    return res.status(400).json({ message: 'New passwords do not match' });
+  }
+
+  if (newPassword === oldPassword) {
+    return res.status(400).json({ message: 'New password must be different from old password' });
+  }
 
   try {
+    const user = await User.findById(req.user._id).select('+password');
+    console.log("user details", user);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Old password is incorrect' });
+    }
+
+    // 2. Hash new password and save
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    return res.status(200).json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Change Password Error:', error.message);
+    return res.status(500).json({ message: 'Something went wrong' });
+  }
+});
+
+//renew password
+router.post('/renew-password/:token', async (req, res) => {
+  const { token } = req.params;
+  console.log("Token from URL:", token);
+
+  const { newPassword, confirmNewPassword } = req.body;
+
+  if (!newPassword || !confirmNewPassword) {
+    return res.status(400).json({ message: 'Please fill all fields' });
+  }
+
+  if (newPassword !== confirmNewPassword) {
+    return res.status(400).json({ message: 'Passwords do not match' });
+  }
+
+  try {
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
     const user = await User.findOne({
-      resetPasswordToken: resetTokenHash,
+      resetPasswordToken: hashedToken,
       resetPasswordExpire: { $gt: Date.now() },
     });
 
-    if (!user)
-      return res.status(400).json({ message: 'Invalid or expired token' });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired password reset token' });
+    }
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
+
     await user.save();
 
     res.status(200).json({ message: 'Password reset successful' });
@@ -183,5 +275,6 @@ router.post('/reset-password/:token', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 module.exports = router;

@@ -8,6 +8,8 @@ import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import ResetPassword from "./pages/ResetPassword";
+import EnterEmail from './pages/EnterEmail';
+import RenewPassword from './pages/RenewPassword';
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
@@ -22,8 +24,9 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-
-
+          <Route path="/forgot-password" element={<EnterEmail />} />
+          <Route path="/reset-password/:token" element={<RenewPassword />} />
+     
         </Routes>
       </div>
     </Router>
