@@ -33,15 +33,16 @@ function AdminRegister() {
   };
 
   return (
-    <div>
-      <h2 className="page-title">Register as Admin</h2>
-      <form onSubmit={handleSubmit}>
+    <div style={styles.container}>
+      <h2 style={styles.title}>Register as Admin</h2>
+      <form onSubmit={handleSubmit} style={styles.form}>
         <input
           name="username"
           placeholder="Username"
           onChange={handleChange}
           value={user.username}
           required
+          style={styles.input}
         /><br />
         <input
           type="email"
@@ -50,6 +51,7 @@ function AdminRegister() {
           onChange={handleChange}
           value={user.email}
           required
+          style={styles.input}
         /><br />
         <input
           type="password"
@@ -58,11 +60,57 @@ function AdminRegister() {
           onChange={handleChange}
           value={user.password}
           required
+          style={styles.input}
         /><br />
-        <button type="submit">Register as Admin</button>
+        <button type="submit" style={styles.button}>Register as Admin</button>
       </form>
     </div>
   );
 }
+
+const styles = {
+  container: {
+    maxWidth: 400,
+    margin: '60px auto',
+    padding: 30,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+    textAlign: 'center',
+  },
+  title: {
+    marginBottom: 30,
+    fontSize: '2rem',
+    color: '#222',
+    fontWeight: '700',
+    letterSpacing: '1px',
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  input: {
+    padding: 14,
+    marginBottom: 20,
+    borderRadius: 8,
+    border: '1.8px solid #ccc',
+    fontSize: '1rem',
+    outline: 'none',
+    transition: 'border-color 0.3s ease',
+  },
+  button: {
+    padding: '14px 0',
+    backgroundColor: '#007bff',
+    color: '#fff',
+    border: 'none',
+    borderRadius: 8,
+    fontWeight: '600',
+    fontSize: '1.1rem',
+    cursor: 'pointer',
+    boxShadow: '0 5px 15px rgba(0,123,255,0.3)',
+    transition: 'background-color 0.3s ease',
+  }
+};
 
 export default AdminRegister;

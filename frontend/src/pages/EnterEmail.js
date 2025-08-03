@@ -33,8 +33,8 @@ const EnterEmail = () => {
   return (
     <div style={styles.container}>
       <form onSubmit={handleSubmit} style={styles.form}>
-        <h2>Forgot Password</h2>
-        <p>Enter your registered email to receive a password reset link.</p>
+        <h2 style={styles.title}>Forgot Password</h2>
+        <p style={styles.description}>Enter your registered email to receive a password reset link.</p>
 
         <input
           type="email"
@@ -50,7 +50,7 @@ const EnterEmail = () => {
         </button>
 
         {status.message && (
-          <p style={{ color: status.error ? 'red' : 'green', marginTop: '10px' }}>
+          <p style={{ color: status.error ? '#d9534f' : '#28a745', marginTop: 15, fontWeight: '600' }}>
             {status.message}
           </p>
         )}
@@ -66,32 +66,50 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f4f4f4',
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
   },
   form: {
     backgroundColor: '#fff',
-    padding: '30px',
-    borderRadius: '10px',
-    boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+    padding: 30,
+    borderRadius: 16,
+    boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
     width: '100%',
-    maxWidth: '400px',
+    maxWidth: 400,
+    textAlign: 'center',
+  },
+  title: {
+    marginBottom: 15,
+    fontSize: '2rem',
+    color: '#222',
+    fontWeight: '700',
+  },
+  description: {
+    marginBottom: 25,
+    fontSize: '1rem',
+    color: '#555',
   },
   input: {
     width: '100%',
-    padding: '12px',
-    margin: '10px 0',
-    borderRadius: '5px',
-    border: '1px solid #ccc',
-    fontSize: '16px',
+    padding: 14,
+    marginBottom: 20,
+    borderRadius: 8,
+    border: '1.8px solid #ccc',
+    fontSize: '1rem',
+    outline: 'none',
+    transition: 'border-color 0.3s ease',
   },
   button: {
     width: '100%',
-    padding: '12px',
+    padding: 14,
     backgroundColor: '#007bff',
     color: '#fff',
     border: 'none',
-    borderRadius: '5px',
-    fontSize: '16px',
+    borderRadius: 8,
+    fontWeight: '600',
+    fontSize: '1.1rem',
     cursor: 'pointer',
+    boxShadow: '0 5px 15px rgba(0,123,255,0.3)',
+    transition: 'background-color 0.3s ease',
   },
 };
 

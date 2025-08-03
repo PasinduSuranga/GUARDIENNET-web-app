@@ -46,7 +46,7 @@ function ResetPassword() {
   return (
     <div style={styles.container}>
       <form onSubmit={handleSubmit} style={styles.form}>
-        <h2>Reset Password</h2>
+        <h2 style={styles.title}>Reset Password</h2>
 
         <input
           type="password"
@@ -83,32 +83,45 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f4f4f4',
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
   },
   form: {
     backgroundColor: '#fff',
     padding: 30,
-    borderRadius: 10,
-    boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+    borderRadius: 16,
+    boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
     width: '100%',
     maxWidth: 400,
+    textAlign: 'center',
+  },
+  title: {
+    marginBottom: 20,
+    fontSize: '2rem',
+    color: '#222',
+    fontWeight: '700',
   },
   input: {
     width: '100%',
-    padding: 12,
+    padding: 14,
     margin: '10px 0',
-    borderRadius: 5,
-    border: '1px solid #ccc',
+    borderRadius: 8,
+    border: '1.8px solid #ccc',
     fontSize: 16,
+    outline: 'none',
+    transition: 'border-color 0.3s ease',
   },
   button: {
     width: '100%',
-    padding: 12,
+    padding: 14,
     backgroundColor: '#007bff',
     color: '#fff',
     border: 'none',
-    borderRadius: 5,
+    borderRadius: 8,
+    fontWeight: '600',
     fontSize: 16,
     cursor: 'pointer',
+    boxShadow: '0 5px 15px rgba(0,123,255,0.3)',
+    transition: 'background-color 0.3s ease',
   },
 };
 

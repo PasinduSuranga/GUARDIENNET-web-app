@@ -32,7 +32,7 @@ function ChangePassword() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`, // make sure token is stored
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({
           oldPassword,
@@ -58,38 +58,104 @@ function ChangePassword() {
   };
 
   return (
-    <div className="change-password-form">
-      <h2>Change Password</h2>
-      {message && <p style={{ color: 'red' }}>{message}</p>}
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Old Password:</label>
+    <div style={styles.container}>
+      <h2 style={styles.title}>Change Password</h2>
+      {message && <p style={styles.error}>{message}</p>}
+      <form onSubmit={handleSubmit} style={styles.form}>
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Old Password:</label>
           <input
             type="password"
             value={oldPassword}
             onChange={(e) => setOldPassword(e.target.value)}
+            style={styles.input}
+            required
           />
         </div>
-        <div>
-          <label>New Password:</label>
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>New Password:</label>
           <input
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
+            style={styles.input}
+            required
           />
         </div>
-        <div>
-          <label>Confirm New Password:</label>
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Confirm New Password:</label>
           <input
             type="password"
             value={confirmNewPassword}
             onChange={(e) => setConfirmNewPassword(e.target.value)}
+            style={styles.input}
+            required
           />
         </div>
-        <button type="submit">Update Password</button>
+        <button type="submit" style={styles.button}>Update Password</button>
       </form>
     </div>
   );
 }
+
+const styles = {
+  container: {
+    maxWidth: 400,
+    margin: '60px auto',
+    padding: 30,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+  },
+  title: {
+    textAlign: 'center',
+    marginBottom: 24,
+    fontWeight: '700',
+    color: '#222',
+    fontSize: '1.8rem',
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  inputGroup: {
+    marginBottom: 18,
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  label: {
+    marginBottom: 6,
+    fontWeight: '600',
+    color: '#444',
+    fontSize: 14,
+  },
+  input: {
+    padding: 12,
+    borderRadius: 8,
+    border: '1.8px solid #ccc',
+    fontSize: 16,
+    outline: 'none',
+    transition: 'border-color 0.3s ease',
+  },
+  button: {
+    marginTop: 10,
+    padding: 14,
+    backgroundColor: '#007bff',
+    color: '#fff',
+    border: 'none',
+    borderRadius: 8,
+    fontWeight: '700',
+    fontSize: 16,
+    cursor: 'pointer',
+    boxShadow: '0 5px 15px rgba(0,123,255,0.3)',
+    transition: 'background-color 0.3s ease',
+  },
+  error: {
+    color: 'red',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+};
 
 export default ChangePassword;

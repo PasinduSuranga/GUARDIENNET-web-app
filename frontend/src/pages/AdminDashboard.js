@@ -10,21 +10,20 @@ function AdminDashboard() {
     navigate('/login');  // Already redirecting to login page on logout
   };
 
-  // Updated this to reset-password or change-password route as you prefer
   const handleChangePassword = () => {
-    navigate('/reset-password'); // <-- Change this to your actual reset password route if different
+    navigate('/reset-password'); // Assuming this is your reset password route
   };
 
   return (
     <div style={styles.container}>
-      <h1>Admin Dashboard</h1>
+      <h1 style={styles.title}>Admin Dashboard</h1>
 
       <div style={styles.buttonContainer}>
-        <button style={styles.button} onClick={handleChangePassword}>
+        <button style={styles.changePasswordBtn} onClick={handleChangePassword}>
           Change Password
         </button>
 
-        <button style={{ ...styles.button, backgroundColor: '#dc3545' }} onClick={handleLogout}>
+        <button style={styles.logoutBtn} onClick={handleLogout}>
           Logout
         </button>
       </div>
@@ -34,28 +33,50 @@ function AdminDashboard() {
 
 const styles = {
   container: {
-    padding: 30,
+    padding: 40,
     maxWidth: 600,
-    margin: '50px auto',
+    margin: '80px auto',
     textAlign: 'center',
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
-    boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.12)',
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+  },
+  title: {
+    marginBottom: 40,
+    fontSize: '2.5rem',
+    color: '#222',
+    fontWeight: '700',
+    letterSpacing: '1.5px',
   },
   buttonContainer: {
-    marginTop: 30,
     display: 'flex',
     justifyContent: 'center',
-    gap: 20,
+    gap: 30,
   },
-  button: {
-    padding: '12px 24px',
-    fontSize: 16,
-    borderRadius: 5,
-    border: 'none',
-    backgroundColor: '#007bff',
+  changePasswordBtn: {
+    padding: '14px 36px',
+    fontSize: '1.1rem',
+    borderRadius: 8,
+    border: '2px solid #007bff',
+    backgroundColor: '#fff',
+    color: '#007bff',
+    cursor: 'pointer',
+    fontWeight: '600',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 8px rgba(0, 123, 255, 0.2)',
+  },
+  logoutBtn: {
+    padding: '14px 36px',
+    fontSize: '1.1rem',
+    borderRadius: 8,
+    border: '2px solid #dc3545',
+    backgroundColor: '#dc3545',
     color: '#fff',
     cursor: 'pointer',
+    fontWeight: '600',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 8px rgba(220, 53, 69, 0.3)',
   },
 };
 
