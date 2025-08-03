@@ -7,7 +7,7 @@ const nodemailer = require('nodemailer');
 const protect = require('../middleware/authMiddleware');
 const User = require('../models/user');
 const TemporaryUser = require('../models/temporaryUser');
-const TemporaryAdmin = require('../models/TemporaryAdmin'); // Make sure this file exists
+const TemporaryAdmin = require('../models/TemporaryAdmin'); 
 
 
 // Nodemailer transporter (unchanged)
@@ -24,11 +24,6 @@ router.post('/register', async (req, res) => {
   const { username, email, password } = req.body;
 
   try {
-    // Check if user already exists in main user collection
-    const existingUser = await User.findOne({ email });
-    if (existingUser)
-      return res.status(400).json({ message: 'Email already registered' });
-
     // Also check if email exists in TemporaryUser collection
     const tempUserExists = await TemporaryUser.findOne({ email });
     if (tempUserExists) {
