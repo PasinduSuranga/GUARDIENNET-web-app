@@ -1,36 +1,37 @@
+// backend/server.js
+
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-
+const authRoutes = require('./routes/authRoutes'); // Auth routes file
 const connectDB = require('./config/db');
 
 const app = express();
-
+app.use(express.json());
 // Middleware
 app.use(cors());
-app.use(express.json());
+ // Needed to parse JSON body from requests
 
 // Routes
-const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
-// Root route
+// Default Route
 app.get('/', (req, res) => {
   res.send('✅ API Running');
 });
 
-// Start Server only after DB connects
+// Start server after DB connection
 const startServer = async () => {
   try {
-    await connectDB(); // Ensure DB is connected before starting the server
+    await connectDB();
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
       console.log(`✅ Server running on http://localhost:${PORT}`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error.message);
-    process.exit(1); // Exit if DB connection fails
+    process.exit(1);
   }
 };
 
-startServer(); // Call async start function
+startServer();

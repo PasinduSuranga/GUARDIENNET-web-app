@@ -17,6 +17,7 @@ const UserSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
+    select: false,
   },
   isVerified: {
     type: Boolean,
@@ -28,14 +29,17 @@ const UserSchema = new mongoose.Schema({
     default: 'user',
   },
   resetPasswordToken: String,
-  resetPasswordExpire: Date
+  resetPasswordExpire: Date,
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
-// ✅ Hash password before saving
+// ✅ FIXED: Avoid hashing again if already hashed (starts with $2b$)
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
+
+  const isAlreadyHashed = typeof this.password === 'string' && this.password.startsWith('$2b$');
+  if (isAlreadyHashed) return next(); // already hashed, skip
 
   try {
     const salt = await bcrypt.genSalt(10);
@@ -46,20 +50,17 @@ UserSchema.pre('save', async function (next) {
   }
 });
 
-// ✅ Match entered password with hashed password
+// ✅ Compare entered password with stored hash
 UserSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// ✅ Generate and hash password reset token
+// ✅ Generate password reset token
 UserSchema.methods.generatePasswordResetToken = function () {
   const resetToken = crypto.randomBytes(32).toString('hex');
-
-  // Hash and store in DB
   this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
   this.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
-
-  return resetToken; // Send this to user's email
+  return resetToken;
 };
 
 module.exports = mongoose.model('User', UserSchema);
