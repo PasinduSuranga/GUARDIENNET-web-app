@@ -48,8 +48,13 @@ function Login() {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      alert("✅ " + data.message || "Login successful!");
-      navigate('/dashboard');
+      alert("✅ " + (data.message || "Login successful!"));
+
+      if (data.user.role === "admin") {
+        navigate('/admin-dashboard');
+      } else {
+        navigate('/dashboard');
+      }
 
     } catch (error) {
       console.error("Frontend login Error:", error);
@@ -58,9 +63,8 @@ function Login() {
   };
 
   const handleForgotPassword = () => {
-  navigate('/forgot-password');
-};
-
+    navigate('/forgot-password');
+  };
 
   return (
     <div>

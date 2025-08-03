@@ -7,6 +7,8 @@ const nodemailer = require('nodemailer');
 const protect = require('../middleware/authMiddleware');
 const User = require('../models/user');
 const TemporaryUser = require('../models/temporaryUser');
+const TemporaryAdmin = require('../models/TemporaryAdmin'); // Make sure this file exists
+
 
 // Nodemailer transporter (unchanged)
 const transporter = nodemailer.createTransport({
@@ -237,7 +239,6 @@ router.post('/change-password', protect, async (req, res) => {
 //renew password
 router.post('/renew-password/:token', async (req, res) => {
   const { token } = req.params;
-  console.log("Token from URL:", token);
 
   const { newPassword, confirmNewPassword } = req.body;
 
@@ -275,6 +276,101 @@ router.post('/renew-password/:token', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+// Add required model
+router.post('/register-admin', async (req, res) => {
+  const { username, email, password } = req.body;
+
+  try {
+    // Check if already in temporary admin collection
+    const tempAdminExists = await TemporaryAdmin.findOne({ email });
+    if (tempAdminExists) {
+      return res.status(400).json({ message: 'Verification already sent. Please check your email.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Save to TemporaryAdmin collection
+    const tempAdmin = new TemporaryAdmin({
+      username,
+      email,
+      password: hashedPassword,
+      role: 'admin', // ✅ Set role here
+    });
+
+    await tempAdmin.save();
+
+    const token = jwt.sign(
+      { email, username, role: 'admin' },
+      process.env.JWT_EMAIL_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    const verifyUrl = `${process.env.BACKEND_URL}/api/auth/verify-admin/${token}`;
+
+    const html = `
+      <h2>Welcome to GuardianNet Admin Panel</h2>
+      <p>Click below to verify your admin email and complete registration:</p>
+      <a href="${verifyUrl}">${verifyUrl}</a>
+      <p>This link expires in 15 minutes.</p>
+    `;
+
+    await transporter.sendMail({
+      from: `"GuardianNet" <${process.env.GMAIL_USER}>`,
+      to: email,
+      subject: 'Admin Account Verification',
+      html,
+    });
+
+    res.status(200).json({ message: 'Verification email sent to admin. Please check your inbox.' });
+  } catch (err) {
+    console.error('Register Admin Error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Backend: verify-admin route
+router.get('/verify-admin/:token', async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_EMAIL_SECRET);
+    const { email, username, role } = decoded;
+
+    // Check if already verified
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      // Redirect with verified=true to show alert on frontend
+      return res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
+    }
+
+    // Get from temporary admin collection
+    const tempAdmin = await TemporaryAdmin.findOne({ email });
+    if (!tempAdmin) {
+      return res.status(400).send('Invalid or expired token');
+    }
+
+    // Create new user from tempAdmin data
+    const newUser = new User({
+      username: tempAdmin.username,
+      email: tempAdmin.email,
+      password: tempAdmin.password,
+      role: 'admin',
+      isVerified: true,
+    });
+
+    await newUser.save();
+    await TemporaryAdmin.deleteOne({ email });
+
+    // Redirect with verified=true to show alert on frontend
+    return res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
+  } catch (err) {
+    console.error('Verify Admin Error:', err);
+    return res.status(400).send('Invalid or expired token');
+  }
+});
+
+
 
 
 module.exports = router;
